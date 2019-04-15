@@ -77,6 +77,11 @@ int main()
     unsigned char *digest = malloc(KEY_SIZE);
 
     FILE *fp = fopen("config.dat.decrypted", "r");
+    if (!fp)
+    {
+        puts("Open fail!");
+        goto Fin;
+    }
     if (fread(file_content, CFG_SIZE, 1, fp) != 1)
     {
         puts("Read fail!");
@@ -90,6 +95,12 @@ int main()
     memset(digest, 0, KEY_SIZE);
 
     int len = hmac_sha1(key, 32, file_content, CFG_SIZE, digest);
+    if (len < 1)
+    {
+        puts("HMAC_SHA1 calc err!");
+        goto Fin;
+    }
+
     printf("Digest length: %d\n", len);
     for (int i = 0; i < len; i++)
     {

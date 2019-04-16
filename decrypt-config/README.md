@@ -6,6 +6,7 @@
 
 - OpenSSL 1.0+
 - C Compiler like *GCC*
+- bcmcrypto (Crypto library from Broadcom)
 
 ## How to compile
 

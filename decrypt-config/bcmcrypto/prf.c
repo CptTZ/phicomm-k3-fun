@@ -7,7 +7,7 @@
  *
  * Copyright (C) 2014, Broadcom Corporation
  * All Rights Reserved.
- * 
+ *
  * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Broadcom Corporation;
  * the contents of this file may not be disclosed to third parties, copied
  * or duplicated in any form, in whole or in part, without the prior
@@ -211,7 +211,7 @@ BCMROMFN(fPRF)(unsigned char *key, int key_len, const unsigned char *prefix,
 #endif /* PRF_TIMING */
 
 void
-dprintf(char *label, uint8 *data, int dlen, int status)
+debug_printf(char *label, uint8 *data, int dlen, int status)
 {
 	int j;
 	printf("%s:\n\t", label);
@@ -241,7 +241,7 @@ main(int argc, char* argv[])
 			6, prf_vec[0].data, prf_vec[0].data_len, output, 64);
 	}
 	if (gettimeofday(&tend, NULL)) exit(1);
-	dprintf("fPRF", output, 64, 0);
+	debug_printf("fPRF", output, 64, 0);
 	usec = tend.tv_usec - tstart.tv_usec;
 	usec += 1000000 * (tend.tv_sec - tstart.tv_sec);
 	printf("usec %d\n", usec);
@@ -253,7 +253,7 @@ main(int argc, char* argv[])
 			6, prf_vec[0].data, prf_vec[0].data_len, output, 64);
 	}
 	if (gettimeofday(&tend, NULL)) exit(1);
-	dprintf("PRF", output, 64, 0);
+	debug_printf("PRF", output, 64, 0);
 	usec = tend.tv_usec - tstart.tv_usec;
 	usec += 1000000 * (tend.tv_sec - tstart.tv_sec);
 	printf("usec %d\n", usec);
@@ -265,7 +265,7 @@ main(int argc, char* argv[])
 			6, prf_vec[0].data, prf_vec[0].data_len, output, 64);
 	}
 	if (gettimeofday(&tend, NULL)) exit(1);
-	dprintf("fPRF", output, 64, 0);
+	debug_printf("fPRF", output, 64, 0);
 	usec = tend.tv_usec - tstart.tv_usec;
 	usec += 1000000 * (tend.tv_sec - tstart.tv_sec);
 	printf("usec %d\n", usec);
@@ -277,7 +277,7 @@ main(int argc, char* argv[])
 			6, prf_vec[0].data, prf_vec[0].data_len, output, 64);
 	}
 	if (gettimeofday(&tend, NULL)) exit(1);
-	dprintf("PRF", output, 64, 0);
+	debug_printf("PRF", output, 64, 0);
 	usec = tend.tv_usec - tstart.tv_usec;
 	usec += 1000000 * (tend.tv_sec - tstart.tv_sec);
 	printf("usec %d\n", usec);
@@ -299,7 +299,7 @@ main(int argc, char* argv[])
 		hmac_sha1(prf_vec[k].data, prf_vec[k].data_len, prf_vec[k].key,
 			prf_vec[k].key_len, digest);
 		c = memcmp(digest, prf_vec[k].digest1, 20);
-		dprintf("HMAC_SHA1", digest, 20, c);
+		debug_printf("HMAC_SHA1", digest, 20, c);
 		if (c) fail++;
 
 		memset(output, 0, 64);
@@ -308,7 +308,7 @@ main(int argc, char* argv[])
 			prf_vec[k].data, prf_vec[k].data_len, output, 16))
 				fail++;
 		c = memcmp(output, prf_vec[k].prf, 16);
-		dprintf("PRF", output, 16, c);
+		debug_printf("PRF", output, 16, c);
 		if (c) fail++;
 
 		memset(output, 0, 64);
@@ -317,7 +317,7 @@ main(int argc, char* argv[])
 			prf_vec[k].data, prf_vec[k].data_len, output, 16))
 				fail++;
 		c = memcmp(output, prf_vec[k].prf, 16);
-		dprintf("fPRF", output, 16, c);
+		debug_printf("fPRF", output, 16, c);
 		if (c) fail++;
 
 		memset(output, 0, 64);
@@ -326,7 +326,7 @@ main(int argc, char* argv[])
 			prf_vec[k].data, prf_vec[k].data_len, output, 64))
 				fail++;
 		c = memcmp(output, prf_vec[k].prf, 64);
-		dprintf("PRF", output, 64, c);
+		debug_printf("PRF", output, 64, c);
 		if (c) fail++;
 
 		memset(output, 0, 64);
@@ -335,7 +335,7 @@ main(int argc, char* argv[])
 		         prf_vec[k].data, prf_vec[k].data_len, output, 64))
 			fail++;
 		c = memcmp(output, prf_vec[k].prf, 64);
-		dprintf("fPRF", output, 64, c);
+		debug_printf("fPRF", output, 64, c);
 		if (c) fail++;
 	}
 

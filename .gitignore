@@ -57,4 +57,4 @@ dkms.conf
 # Project specific
 
 config.dat
-decrypt-config/phicomm_config_dec
+config.dat.decrypted

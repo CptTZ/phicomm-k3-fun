@@ -83,7 +83,7 @@ int main(int argc, char const *argv[])
         puts("Error: Open Output");
         goto FINALIZE;
     }
-    fwrite(decoded_msg_memory, 1, config_size, fp1);
+    fwrite(decoded_msg_memory, config_size, 1, fp1);
     fclose(fp1);
 
 FINALIZE:

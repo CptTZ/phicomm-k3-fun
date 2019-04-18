@@ -57,4 +57,7 @@ dkms.conf
 # Project specific
 
 config.dat
-config.dat.decrypted
+*decrypted.dat
+decrypt-config/phi_aes
+decrypt-config/phi_chksum
+decrypt-config/phi_base64

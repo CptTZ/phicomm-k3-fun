@@ -12,6 +12,10 @@
 
 `gcc phi_aes.c -O3 -lcrypto -static -o phicomm_config_dec`
 
+OR
+
+`make phi_aes`
+
 ## How to use
 
 - Compile it

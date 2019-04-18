@@ -19,15 +19,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
-#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
-#define CFG_SIZE (0x10600u)
+#include "bcmcrypto/prf.h"
+
+#define B1_CFG_SIZE (0x10600u)
 #define KEY_SIZE (0x50u)
+#define VALID_BASE64 (28)
 
 void Base64Encode(const unsigned char *buffer, size_t length, char **b64text)
 { //Encodes a binary safe base 64 string
@@ -50,26 +50,6 @@ void Base64Encode(const unsigned char *buffer, size_t length, char **b64text)
     return;
 }
 
-unsigned int hmac_sha1(const void *k,          /* secret key */
-                       int lk,                 /* length of the key in bytes */
-                       const unsigned char *d, /* data */
-                       size_t ld,              /* length of data in bytes */
-                       unsigned char *out      /* output buffer, at least "t" bytes */
-)
-{
-    unsigned int res = 0;
-    unsigned char *digest = HMAC(EVP_sha1(), k, lk, d, ld, out, &res);
-    if (!digest)
-    {
-        ERR_clear_error();
-        return -1;
-    }
-    else
-    {
-        return res;
-    }
-}
-
 void print_help()
 {
     puts("Useage: ./phi_chksum [path to decrypted config]");
@@ -83,7 +63,8 @@ int main(int ac, char *av[])
         print_help();
         return -1;
     }
-    unsigned char *file_content = malloc(CFG_SIZE);
+    size_t cfg_size = B1_CFG_SIZE;
+    unsigned char *file_content = malloc(cfg_size);
     void *key = malloc(KEY_SIZE);
     unsigned char *digest = malloc(KEY_SIZE);
 
@@ -93,7 +74,7 @@ int main(int ac, char *av[])
         puts("Open fail!");
         goto Fin;
     }
-    if (fread(file_content, CFG_SIZE, 1, fp) != 1)
+    if (fread(file_content, cfg_size, 1, fp) != 1)
     {
         puts("Read fail!");
         goto Fin;
@@ -101,25 +82,19 @@ int main(int ac, char *av[])
     fclose(fp);
 
     memset(file_content + 1024, 0, 0x200u);
-    snprintf(file_content + 1024, 0x200u, "%s\n", "NVRAMTemporaryChecksumFiller");
+    snprintf((char *)file_content + 1024, 0x200u, "%s\n", "NVRAMTemporaryChecksumFiller");
     memset(key, 0, KEY_SIZE);
     memset(digest, 0, KEY_SIZE);
 
-    int len = hmac_sha1(key, 32, file_content, CFG_SIZE, digest);
-    if (len < 1)
-    {
-        puts("HMAC_SHA1 calc err!");
-        goto Fin;
-    }
+    hmac_sha1(file_content, cfg_size, key, 32, digest);
 
-    printf("Digest length: %d\n", len);
-    for (int i = 0; i < len; i++)
+    for (int i = 0; i < KEY_SIZE; i++)
     {
         printf("%02x ", digest[i]);
     }
 
     char *b64Out;
-    Base64Encode(digest, len, &b64Out);
+    Base64Encode(digest, VALID_BASE64, &b64Out);
     printf("\nOutput: %s\n\n", b64Out);
     free(b64Out);
 

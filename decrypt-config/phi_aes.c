@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include <openssl/aes.h>
 
 #define A1A2_SIZE (0x10400u)
@@ -70,7 +71,7 @@ int main(int argc, char const *argv[])
     unsigned char *user_key = malloc(17);
     genkey(user_key);
     printf("User key: %s\n", user_key);
-    printf("Backup size: %d\n", config_size);
+    printf("Backup size: %lu\n", config_size);
 
     void *file_content = malloc(config_size);
     void *decoded_msg_memory = malloc(config_size);
@@ -100,8 +101,8 @@ int main(int argc, char const *argv[])
     puts("Decrypting...");
     do
     {
-        char *ori = (char *)(file_content) + file_counter;
-        char *final = (char *)(decoded_msg_memory) + file_counter;
+        unsigned char *ori = (unsigned char *)(file_content) + file_counter;
+        unsigned char *final = (unsigned char *)(decoded_msg_memory) + file_counter;
         file_counter += 16;
         AES_ecb_encrypt(ori, final, &aes, AES_DECRYPT);
     } while (file_counter != config_size);

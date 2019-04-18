@@ -70,13 +70,24 @@ unsigned int hmac_sha1(const void *k,          /* secret key */
     }
 }
 
-int main()
+void print_help()
 {
+    puts("Useage: ./phi_chksum [path to decrypted config]");
+    puts("  Example: ./phi_chksum /mnt/e/config_b1_decrypted.dat");
+}
+
+int main(int ac, char *av[])
+{
+    if (ac != 2)
+    {
+        print_help();
+        return -1;
+    }
     unsigned char *file_content = malloc(CFG_SIZE);
     void *key = malloc(KEY_SIZE);
     unsigned char *digest = malloc(KEY_SIZE);
 
-    FILE *fp = fopen("config.dat.decrypted", "r");
+    FILE *fp = fopen(av[1], "r");
     if (!fp)
     {
         puts("Open fail!");

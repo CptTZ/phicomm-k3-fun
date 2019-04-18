@@ -15,11 +15,42 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "phi.h"
 
-static const char *b64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+#include <openssl/evp.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+
+void Base64Encode(const unsigned char *buffer, size_t length, char **b64text)
+{ //Encodes a binary safe base 64 string
+    BIO *bio, *b64;
+    BUF_MEM *bufferPtr;
+
+    b64 = BIO_new(BIO_f_base64());
+    bio = BIO_new(BIO_s_mem());
+    bio = BIO_push(b64, bio);
+
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Ignore newlines - write everything in one line
+    BIO_write(bio, buffer, length);
+    BIO_flush(bio);
+    BIO_get_mem_ptr(bio, &bufferPtr);
+    BIO_set_close(bio, BIO_NOCLOSE);
+    BIO_free_all(bio);
+
+    *b64text = (*bufferPtr).data;
+
+    return;
+}
+
+void print_b64(unsigned char *digest, size_t b64_len)
+{
+    char *b64Out;
+    Base64Encode(digest, b64_len, &b64Out);
+    printf("Output: %s\n", b64Out);
+    free(b64Out);
+}
+
+#ifdef BASE64_DEBUG
 
 int chksum_decode(unsigned char *chksum_input, unsigned char *decoded_chksum)
 {
@@ -87,10 +118,12 @@ int chksum_decode(unsigned char *chksum_input, unsigned char *decoded_chksum)
     return res_len;
 }
 
+const char *b64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 int main(int argc, char const *argv[])
 {
-    unsigned char *a = "BwmP0Gn1XFpXNCJ8+MoU5ghk5cfyCavindicatorR9fTA==";
-    unsigned char *b = calloc(1, 0x50);
+    const char *a = "BwmP0Gn1XFpXNCJ8+MoU5ghk5cfyCavindicatorR9fTA==";
+    unsigned char *b = (unsigned char *)calloc(1, 0x50);
 
     puts(a);
     int len = chksum_decode(a, b);
@@ -106,3 +139,5 @@ int main(int argc, char const *argv[])
     free(b);
     return 0;
 }
+
+#endif

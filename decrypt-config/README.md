@@ -10,17 +10,13 @@
 
 ## How to compile
 
-`gcc phi_aes.c -O3 -lcrypto -static -o phicomm_config_dec`
-
-OR
-
-`make phi_aes`
+`make`
 
 ## How to use
 
 - Compile it
-- Put the `config.dat` file at the same directory with compiled program.
-- Run the program, and `config.dat.decrypted` is the decrypted config file.
+- Read instructions
+- Enjoy
 
 ## Disclaimer
 

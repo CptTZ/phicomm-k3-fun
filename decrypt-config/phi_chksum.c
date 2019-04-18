@@ -15,92 +15,76 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <openssl/evp.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
-
+#include "phi.h"
 #include "bcmcrypto/prf.h"
 
-#define B1_CFG_SIZE (0x10600u)
 #define KEY_SIZE (0x50u)
 #define VALID_BASE64 (28)
 
-void Base64Encode(const unsigned char *buffer, size_t length, char **b64text)
-{ //Encodes a binary safe base 64 string
-    BIO *bio, *b64;
-    BUF_MEM *bufferPtr;
-
-    b64 = BIO_new(BIO_f_base64());
-    bio = BIO_new(BIO_s_mem());
-    bio = BIO_push(b64, bio);
-
-    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Ignore newlines - write everything in one line
-    BIO_write(bio, buffer, length);
-    BIO_flush(bio);
-    BIO_get_mem_ptr(bio, &bufferPtr);
-    BIO_set_close(bio, BIO_NOCLOSE);
-    BIO_free_all(bio);
-
-    *b64text = (*bufferPtr).data;
-
-    return;
-}
-
-void print_help()
+int proc(char *path, size_t cfg_size)
 {
-    puts("Useage: ./phi_chksum [path to decrypted config]");
-    puts("  Example: ./phi_chksum /mnt/e/config_b1_decrypted.dat");
-}
+    unsigned char *phi_key = gen_phi_key();
+    unsigned char *file_content = phi_config_decode(path, phi_key, cfg_size);
 
-int main(int ac, char *av[])
-{
-    if (ac != 2)
+    if (file_content == NULL)
     {
-        print_help();
+        free(phi_key);
         return -1;
     }
-    size_t cfg_size = B1_CFG_SIZE;
-    unsigned char *file_content = malloc(cfg_size);
-    void *key = malloc(KEY_SIZE);
-    unsigned char *digest = malloc(KEY_SIZE);
 
-    FILE *fp = fopen(av[1], "rb");
-    if (!fp)
-    {
-        puts("Open fail!");
-        goto Fin;
-    }
-    if (fread(file_content, cfg_size, 1, fp) != 1)
-    {
-        puts("Read fail!");
-        goto Fin;
-    }
-    fclose(fp);
+    unsigned char *buf = (unsigned char *)malloc(KEY_SIZE);
+    unsigned char *digest = (unsigned char *)malloc(KEY_SIZE);
 
     memset(file_content + 1024, 0, 0x200u);
     snprintf((char *)file_content + 1024, 0x200u, "%s\n", "NVRAMTemporaryChecksumFiller");
-    memset(key, 0, KEY_SIZE);
+
+    memset(buf, 0, KEY_SIZE);
     memset(digest, 0, KEY_SIZE);
 
-    hmac_sha1(file_content, cfg_size, key, 32, digest);
+    hmac_sha1(file_content, cfg_size, buf, 32, digest);
 
     for (int i = 0; i < KEY_SIZE; i++)
     {
         printf("%02x ", digest[i]);
+        if ((i + 1) % 16 == 0)
+            putchar('\n');
     }
 
-    char *b64Out;
-    Base64Encode(digest, VALID_BASE64, &b64Out);
-    printf("\nOutput: %s\n\n", b64Out);
-    free(b64Out);
+    print_b64(digest, VALID_BASE64);
 
-Fin:
     free(digest);
     free(file_content);
-    free(key);
+    free(buf);
     return 0;
+}
+
+void print_help()
+{
+    puts("Useage: ./phi_chksum [path to original config] [a1 b1]");
+    puts("  Example: ./phi_chksum /mnt/e/config.dat b1");
+}
+
+int main(int ac, char *av[])
+{
+    if (ac != 3)
+    {
+        print_help();
+        return -1;
+    }
+    size_t cfg_size;
+    if (strncmp(av[2], "a1", 2) == 0)
+    {
+        cfg_size = A1A2_CFG_SIZE;
+    }
+    else if (strncmp(av[2], "b1", 2) == 0)
+    {
+        cfg_size = B1_CFG_SIZE;
+    }
+    else
+    {
+        print_help();
+        return -1;
+    }
+
+    return proc(av[1], cfg_size);
 }

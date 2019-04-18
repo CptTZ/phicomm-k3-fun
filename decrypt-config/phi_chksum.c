@@ -87,7 +87,7 @@ int main(int ac, char *av[])
     void *key = malloc(KEY_SIZE);
     unsigned char *digest = malloc(KEY_SIZE);
 
-    FILE *fp = fopen(av[1], "r");
+    FILE *fp = fopen(av[1], "rb");
     if (!fp)
     {
         puts("Open fail!");

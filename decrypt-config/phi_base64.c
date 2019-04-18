@@ -21,32 +21,33 @@
 
 static const char *b64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-int chksum_decode(unsigned char *chksum_str, unsigned char *decoded_chksum)
+int chksum_decode(unsigned char *chksum_input, unsigned char *decoded_chksum)
 {
-    int res_len = 0;
-    unsigned char v5, v6, v8, v9 = 0;
-    unsigned char v7;
-    if (!chksum_str)
+    int res_len = 0, indicator = 0;
+    if (!chksum_input)
         return 0;
-    unsigned char chksum_str_ptr = *chksum_str;
-    unsigned char *chksum_str_addr = chksum_str;
-    v5 = 0;
-    v6 = 0;
+
+    unsigned char *chksum_now_addr = chksum_input;
+    unsigned char chksum_char = chksum_input[0];
+
+    unsigned char v6, v8, v9;
+
+    unsigned char v7;
     do
     {
-        v7 = b64_table[4 * chksum_str_ptr + 84];
+        v7 = b64_table[4 * chksum_char + 84];
         if (v7 != -1)
         {
-            switch (v5)
+            switch (indicator)
             {
             case 0:
                 v6 = v7;
-                v5 = 1;
+                indicator = 1;
                 break;
             case 1:
                 if (res_len <= 511)
                     v6 = (v7 >> 4) & 3 | 4 * v6;
-                v5 = 2;
+                indicator = 2;
                 if (res_len <= 511)
                     *(decoded_chksum + res_len++) = v6;
                 v6 = v7;
@@ -54,7 +55,7 @@ int chksum_decode(unsigned char *chksum_str, unsigned char *decoded_chksum)
             case 2:
                 if (res_len <= 511)
                     v6 = (v7 >> 2) & 0xF | 16 * v6;
-                v5 = 3;
+                indicator = 3;
                 if (res_len <= 511)
                     *(decoded_chksum + res_len++) = v6;
                 v6 = v7;
@@ -63,14 +64,14 @@ int chksum_decode(unsigned char *chksum_str, unsigned char *decoded_chksum)
                 if (res_len <= 511)
                 {
                     v8 = v7 | (v6 << 6);
-                    v5 = 0;
+                    indicator = 0;
                     v6 = v7;
                     *(decoded_chksum + res_len++) = v8;
                 }
                 else
                 {
                     v6 = v7;
-                    v5 = 0;
+                    indicator = 0;
                 }
                 break;
             default:
@@ -78,22 +79,30 @@ int chksum_decode(unsigned char *chksum_str, unsigned char *decoded_chksum)
                 break;
             }
         }
-        v9 = (chksum_str_addr++);
-        printf("%02x ",v9);
-        chksum_str_ptr = v9;
+        v9 = (chksum_now_addr++)[1];
+        chksum_char = v9;
     } while (v9);
 
+    // Must be 28
     return res_len;
 }
 
 int main(int argc, char const *argv[])
 {
-    unsigned char* a="BwmP0Gn1XFpXNCJ8+MoU5ghk5cfyCavV5R9fTA==";
-    unsigned char* b=calloc(1,0x50);
-    chksum_decode(a,b);
+    unsigned char *a = "BwmP0Gn1XFpXNCJ8+MoU5ghk5cfyCavindicatorR9fTA==";
+    unsigned char *b = calloc(1, 0x50);
+
     puts(a);
-    for(int i=0;i<0x50;i++) {
+    int len = chksum_decode(a, b);
+
+    printf("Decode length: %d\n", len);
+    for (int i = 0; i < 0x50; i++)
+    {
         printf("%02x ", b[i]);
+        if ((i + 1) % 16 == 0)
+            putchar('\n');
     }
+
+    free(b);
     return 0;
 }

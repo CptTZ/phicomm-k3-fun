@@ -20,7 +20,8 @@
 #include <stdlib.h>
 #include <openssl/aes.h>
 
-const size_t config_size = 0x10600u;
+#define A1A2_SIZE (0x10400u)
+#define B1_SIZE (0x10600u)
 
 void genkey(unsigned char *s)
 {
@@ -37,11 +38,40 @@ void genkey(unsigned char *s)
     s[16] = 0;
 }
 
+void print_help()
+{
+    puts("Useage: ./phi_aes [path to config.dat] [a1,b1]");
+    puts("  Example: ./phi_aes /mnt/e/config.dat a1");
+}
+
 int main(int argc, char const *argv[])
 {
+    if (argc != 3)
+    {
+        print_help();
+        return -1;
+    }
+
+    size_t config_size;
+    if (strncmp(argv[2], "a1", 2) == 0)
+    {
+        config_size = A1A2_SIZE;
+    }
+    else if (strncmp(argv[2], "b1", 2) == 0)
+    {
+        config_size = B1_SIZE;
+    }
+    else
+    {
+        print_help();
+        return -1;
+    }
+
     unsigned char *user_key = malloc(17);
     genkey(user_key);
     printf("User key: %s\n", user_key);
+    printf("Backup size: %d\n", config_size);
+
     void *file_content = malloc(config_size);
     void *decoded_msg_memory = malloc(config_size);
     AES_KEY aes;
@@ -52,7 +82,7 @@ int main(int argc, char const *argv[])
     }
 
     // Open file
-    FILE *fp = fopen("config.dat", "r");
+    FILE *fp = fopen(argv[1], "rb");
     if (!fp)
     {
         puts("Error: Open");
@@ -77,7 +107,9 @@ int main(int argc, char const *argv[])
     } while (file_counter != config_size);
 
     // Write out
-    FILE *fp1 = fopen("config.dat.decrypted", "w");
+    char buf[30];
+    sprintf(buf, "config_%s_decrypted.dat", argv[2]);
+    FILE *fp1 = fopen(buf, "w");
     if (!fp1)
     {
         puts("Error: Open Output");

@@ -22,9 +22,9 @@
 #define _PK_SIZE (17)
 
 // This key is some what fixed, just remember to free it...
-unsigned char *gen_phi_key()
+BYTE *gen_phi_key()
 {
-    unsigned char *s = (unsigned char *)calloc(1, _PK_SIZE);
+    BYTE *s = (BYTE *)calloc(1, _PK_SIZE);
     int c = 0;
     int i = 0;
     do
@@ -38,7 +38,7 @@ unsigned char *gen_phi_key()
     return s;
 }
 
-unsigned char *phi_config_decode(const char *file_path, unsigned char *user_key, size_t config_size)
+BYTE *phi_config_decode(const char *file_path, BYTE *user_key, size_t config_size)
 {
     AES_KEY aes;
     if (AES_set_decrypt_key(user_key, 128, &aes) < 0)
@@ -55,7 +55,7 @@ unsigned char *phi_config_decode(const char *file_path, unsigned char *user_key,
         return NULL;
     }
     // Read file
-    unsigned char *file_content = (unsigned char *)malloc(config_size);
+    BYTE *file_content = (BYTE *)malloc(config_size);
     if (fread(file_content, config_size, 1, fp) != 1)
     {
         puts("Error: Read");
@@ -64,14 +64,14 @@ unsigned char *phi_config_decode(const char *file_path, unsigned char *user_key,
     }
     fclose(fp);
 
-    unsigned char *decoded_msg = (unsigned char *)malloc(config_size);
+    BYTE *decoded_msg = (BYTE *)malloc(config_size);
     // Decrypt
     size_t file_counter = 0;
     puts("Decrypting config file...");
     do
     {
-        unsigned char *ori = (file_content) + file_counter;
-        unsigned char *final = (decoded_msg) + file_counter;
+        BYTE *ori = (file_content) + file_counter;
+        BYTE *final = (decoded_msg) + file_counter;
         file_counter += 16;
         AES_ecb_encrypt(ori, final, &aes, AES_DECRYPT);
     } while (file_counter != config_size);
@@ -111,11 +111,11 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
-    unsigned char *user_key = gen_phi_key();
+    BYTE *user_key = gen_phi_key();
     printf("User key: %s\n", user_key);
     printf("Backup size: %lu\n", config_size);
 
-    unsigned char *decoded_msg_memory = phi_config_decode(argv[1], user_key, config_size);
+    BYTE *decoded_msg_memory = phi_config_decode(argv[1], user_key, config_size);
 
     // Write out
     char buf[30];

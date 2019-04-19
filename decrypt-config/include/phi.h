@@ -22,17 +22,19 @@
 #include <string.h>
 #include <stdlib.h>
 
+typedef unsigned char BYTE;
+
 #define A1A2_CFG_SIZE (0x10400u)
 #define B1_CFG_SIZE (0x10600u)
 
 // phi_aes.c
-unsigned char *gen_phi_key();
-unsigned char *phi_config_decode(const char *file_path, unsigned char *user_key, size_t config_size);
+BYTE *gen_phi_key();
+BYTE *phi_config_decode(const char *file_path, BYTE *user_key, size_t config_size);
 
 // phi_base64.c
-void print_hex(unsigned char *data, size_t len);
-void print_b64(unsigned char *digest, size_t b64_len);
-void Base64Decode(const char *b64message, unsigned char **buffer, size_t *length);
-void Base64Encode(const unsigned char *buffer, size_t length, char **b64text);
+void print_hex(BYTE *data, size_t len);
+void print_b64(BYTE *digest, size_t b64_len);
+void Base64Decode(const char *b64message, BYTE **buffer, size_t *length);
+void Base64Encode(const BYTE *buffer, size_t length, char **b64text);
 
 #endif

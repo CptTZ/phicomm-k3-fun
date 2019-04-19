@@ -21,10 +21,10 @@
 #define KEY_SIZE (0x50u)
 #define CHKSUM_LEN_VAL (0x14u)
 
-char *get_chksum_infile(unsigned char *data)
+char *get_chksum_infile(BYTE *data)
 {
     size_t len = strlen("Checksum=");
-    unsigned char *data_init = data + 1024 + len;
+    BYTE *data_init = data + 1024 + len;
     size_t chksum_len = strlen((char *)data_init);
     char *res = (char *)calloc(1, chksum_len);
     memcpy(res, data_init, chksum_len - 1); // Ignore last LF
@@ -33,8 +33,9 @@ char *get_chksum_infile(unsigned char *data)
 
 int proc(char *path, size_t cfg_size)
 {
-    unsigned char *phi_key = gen_phi_key();
-    unsigned char *file_content = phi_config_decode(path, phi_key, cfg_size);
+    printf("File path: %s (%lu)\n", path, cfg_size);
+    BYTE *phi_key = gen_phi_key();
+    BYTE *file_content = phi_config_decode(path, phi_key, cfg_size);
 
     if (file_content == NULL)
     {
@@ -44,7 +45,7 @@ int proc(char *path, size_t cfg_size)
 
     char *checksum_in_file = get_chksum_infile(file_content);
     printf("In-file checksum: %s\n", checksum_in_file);
-    unsigned char *chksum_file_dec;
+    BYTE *chksum_file_dec;
     size_t dec_len = 0;
     Base64Decode(checksum_in_file, &chksum_file_dec, &dec_len);
 
@@ -53,8 +54,8 @@ int proc(char *path, size_t cfg_size)
         puts("In file checksum length not 28!");
     }
 
-    unsigned char *hmac_key = (unsigned char *)malloc(KEY_SIZE);
-    unsigned char *digest = (unsigned char *)malloc(KEY_SIZE);
+    BYTE *hmac_key = (BYTE *)malloc(KEY_SIZE);
+    BYTE *digest = (BYTE *)malloc(KEY_SIZE);
     memset(hmac_key, 0, KEY_SIZE);
 
     memset((void *)(file_content + 1024), 0, 0x200u);

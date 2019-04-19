@@ -27,7 +27,7 @@ const char *b64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
  *OpenSSL base64 ref: https://gist.github.com/barrysteyn/7308212
  */
 
-void Base64Encode(const unsigned char *buffer, size_t length, char **b64text)
+void Base64Encode(const BYTE *buffer, size_t length, char **b64text)
 { //Encodes a binary safe base 64 string
     BIO *bio, *b64;
     BUF_MEM *bufferPtr;
@@ -59,12 +59,12 @@ size_t calcDecodeLength(const char *b64input)
     return (len * 3) / 4 - padding;
 }
 
-void Base64Decode(const char *b64message, unsigned char **buffer, size_t *length)
+void Base64Decode(const char *b64message, BYTE **buffer, size_t *length)
 { //Decodes a base64 encoded string
     BIO *bio, *b64;
 
     int decodeLen = calcDecodeLength(b64message);
-    *buffer = (unsigned char *)malloc(decodeLen + 1);
+    *buffer = (BYTE *)malloc(decodeLen + 1);
     (*buffer)[decodeLen] = '\0';
 
     bio = BIO_new_mem_buf(b64message, -1);
@@ -80,7 +80,7 @@ void Base64Decode(const char *b64message, unsigned char **buffer, size_t *length
     BIO_free_all(bio);
 }
 
-void print_b64(unsigned char *digest, size_t b64_len)
+void print_b64(BYTE *digest, size_t b64_len)
 {
     char *b64Out;
     Base64Encode(digest, b64_len, &b64Out);
@@ -88,7 +88,7 @@ void print_b64(unsigned char *digest, size_t b64_len)
     free(b64Out);
 }
 
-void print_hex(unsigned char *data, size_t len)
+void print_hex(BYTE *data, size_t len)
 {
     printf("HEX:\n  ");
     for (int i = 0; i < len; i++)
@@ -100,6 +100,13 @@ void print_hex(unsigned char *data, size_t len)
     putchar('\n');
 }
 
+int phi_b64dec(BYTE *in, char *b64)
+{
+    int res = 0;
+
+    return res;
+}
+
 #ifdef BASE64_DEBUG
 
 int main(int argc, char const *argv[])
@@ -107,7 +114,7 @@ int main(int argc, char const *argv[])
     const char *a = "BwmP0Gn1XFpXNCJ8+MoU5ghk5cfyCavV5R9fTA==";
     puts(a);
 
-    unsigned char *alt_dec;
+    BYTE *alt_dec;
     size_t alt_dec_len;
     Base64Decode(a, &alt_dec, &alt_dec_len);
     printf("Decode length (alternative): %lu\n", alt_dec_len);

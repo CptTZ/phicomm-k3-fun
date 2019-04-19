@@ -32,5 +32,7 @@ unsigned char *phi_config_decode(const char *file_path, unsigned char *user_key,
 // phi_base64.c
 void print_hex(unsigned char *data, size_t len);
 void print_b64(unsigned char *digest, size_t b64_len);
+void Base64Decode(const char *b64message, unsigned char **buffer, size_t *length);
+void Base64Encode(const unsigned char *buffer, size_t length, char **b64text);
 
 #endif

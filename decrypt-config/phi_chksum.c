@@ -19,7 +19,17 @@
 #include "bcmcrypto/prf.h"
 
 #define KEY_SIZE (0x50u)
-#define VALID_BASE64 (28)
+#define CHKSUM_LEN_VAL (0x14u)
+
+char *get_chksum_infile(unsigned char *data)
+{
+    size_t len = strlen("Checksum=");
+    unsigned char *data_init = data + 1024 + len;
+    size_t chksum_len = strlen((char *)data_init);
+    char *res = (char *)calloc(1, chksum_len);
+    memcpy(res, data_init, chksum_len - 1); // Ignore last LF
+    return res;
+}
 
 int proc(char *path, size_t cfg_size)
 {
@@ -32,24 +42,40 @@ int proc(char *path, size_t cfg_size)
         return -1;
     }
 
-    unsigned char *buf = (unsigned char *)malloc(KEY_SIZE);
+    char *checksum_in_file = get_chksum_infile(file_content);
+    printf("In-file checksum: %s\n", checksum_in_file);
+    unsigned char *chksum_file_dec;
+    size_t dec_len = 0;
+    Base64Decode(checksum_in_file, &chksum_file_dec, &dec_len);
+
+    if (dec_len != 28)
+    {
+        puts("In file checksum length not 28!");
+    }
+
+    unsigned char *hmac_key = (unsigned char *)malloc(KEY_SIZE);
     unsigned char *digest = (unsigned char *)malloc(KEY_SIZE);
+    memset(hmac_key, 0, KEY_SIZE);
 
-    memset(file_content + 1024, 0, 0x200u);
+    memset((void *)(file_content + 1024), 0, 0x200u);
     snprintf((char *)file_content + 1024, 0x200u, "%s\n", "NVRAMTemporaryChecksumFiller");
-
-    memset(buf, 0, KEY_SIZE);
     memset(digest, 0, KEY_SIZE);
 
-    hmac_sha1(file_content, cfg_size, buf, 32, digest);
+    hmac_sha1(file_content, cfg_size, hmac_key, 32, digest);
 
-    print_hex(digest, KEY_SIZE);
-    print_b64(digest, VALID_BASE64);
+    if (memcmp(digest, chksum_file_dec, CHKSUM_LEN_VAL))
+    {
+        puts("Checksum mismatch!");
+    }
+    print_hex(digest, CHKSUM_LEN_VAL);
+    print_b64(digest, CHKSUM_LEN_VAL);
 
     free(phi_key);
     free(digest);
     free(file_content);
-    free(buf);
+    free(hmac_key);
+    free(checksum_in_file);
+    free(chksum_file_dec);
     return 0;
 }
 

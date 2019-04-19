@@ -43,15 +43,10 @@ int proc(char *path, size_t cfg_size)
 
     hmac_sha1(file_content, cfg_size, buf, 32, digest);
 
-    for (int i = 0; i < KEY_SIZE; i++)
-    {
-        printf("%02x ", digest[i]);
-        if ((i + 1) % 16 == 0)
-            putchar('\n');
-    }
-
+    print_hex(digest, KEY_SIZE);
     print_b64(digest, VALID_BASE64);
 
+    free(phi_key);
     free(digest);
     free(file_content);
     free(buf);

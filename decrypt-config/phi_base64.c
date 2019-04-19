@@ -21,6 +21,12 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
+const char *b64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/*
+ *OpenSSL base64 ref: https://gist.github.com/barrysteyn/7308212
+ */
+
 void Base64Encode(const unsigned char *buffer, size_t length, char **b64text)
 { //Encodes a binary safe base 64 string
     BIO *bio, *b64;
@@ -38,8 +44,40 @@ void Base64Encode(const unsigned char *buffer, size_t length, char **b64text)
     BIO_free_all(bio);
 
     *b64text = (*bufferPtr).data;
+}
 
-    return;
+size_t calcDecodeLength(const char *b64input)
+{ //Calculates the length of a decoded string
+    size_t len = strlen(b64input),
+           padding = 0;
+
+    if (b64input[len - 1] == '=' && b64input[len - 2] == '=') //last two chars are =
+        padding = 2;
+    else if (b64input[len - 1] == '=') //last char is =
+        padding = 1;
+
+    return (len * 3) / 4 - padding;
+}
+
+void Base64Decode(const char *b64message, unsigned char **buffer, size_t *length)
+{ //Decodes a base64 encoded string
+    BIO *bio, *b64;
+
+    int decodeLen = calcDecodeLength(b64message);
+    *buffer = (unsigned char *)malloc(decodeLen + 1);
+    (*buffer)[decodeLen] = '\0';
+
+    bio = BIO_new_mem_buf(b64message, -1);
+    b64 = BIO_new(BIO_f_base64());
+    bio = BIO_push(b64, bio);
+
+    BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL); //Do not use newlines to flush buffer
+    *length = BIO_read(bio, *buffer, strlen(b64message));
+    if (*length != decodeLen)
+    {
+        puts("Base64 decode probably went horribly wrong");
+    }
+    BIO_free_all(bio);
 }
 
 void print_b64(unsigned char *digest, size_t b64_len)
@@ -50,93 +88,32 @@ void print_b64(unsigned char *digest, size_t b64_len)
     free(b64Out);
 }
 
-#ifdef BASE64_DEBUG
-
-int chksum_decode(unsigned char *chksum_input, unsigned char *decoded_chksum)
+void print_hex(unsigned char *data, size_t len)
 {
-    int res_len = 0, indicator = 0;
-    if (!chksum_input)
-        return 0;
-
-    unsigned char *chksum_now_addr = chksum_input;
-    unsigned char chksum_char = chksum_input[0];
-
-    unsigned char v6, v8, v9;
-
-    unsigned char v7;
-    do
+    printf("HEX:\n  ");
+    for (int i = 0; i < len; i++)
     {
-        v7 = b64_table[4 * chksum_char + 84];
-        if (v7 != -1)
-        {
-            switch (indicator)
-            {
-            case 0:
-                v6 = v7;
-                indicator = 1;
-                break;
-            case 1:
-                if (res_len <= 511)
-                    v6 = (v7 >> 4) & 3 | 4 * v6;
-                indicator = 2;
-                if (res_len <= 511)
-                    *(decoded_chksum + res_len++) = v6;
-                v6 = v7;
-                break;
-            case 2:
-                if (res_len <= 511)
-                    v6 = (v7 >> 2) & 0xF | 16 * v6;
-                indicator = 3;
-                if (res_len <= 511)
-                    *(decoded_chksum + res_len++) = v6;
-                v6 = v7;
-                break;
-            case 3:
-                if (res_len <= 511)
-                {
-                    v8 = v7 | (v6 << 6);
-                    indicator = 0;
-                    v6 = v7;
-                    *(decoded_chksum + res_len++) = v8;
-                }
-                else
-                {
-                    v6 = v7;
-                    indicator = 0;
-                }
-                break;
-            default:
-                v6 = v7;
-                break;
-            }
-        }
-        v9 = (chksum_now_addr++)[1];
-        chksum_char = v9;
-    } while (v9);
-
-    // Must be 28
-    return res_len;
+        printf("%02x ", data[i]);
+        if ((i + 1) % 16 == 0)
+            printf("\n  ");
+    }
+    putchar('\n');
 }
 
-const char *b64_table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+#ifdef BASE64_DEBUG
 
 int main(int argc, char const *argv[])
 {
-    const char *a = "BwmP0Gn1XFpXNCJ8+MoU5ghk5cfyCavindicatorR9fTA==";
-    unsigned char *b = (unsigned char *)calloc(1, 0x50);
-
+    const char *a = "BwmP0Gn1XFpXNCJ8+MoU5ghk5cfyCavV5R9fTA==";
     puts(a);
-    int len = chksum_decode(a, b);
 
-    printf("Decode length: %d\n", len);
-    for (int i = 0; i < 0x50; i++)
-    {
-        printf("%02x ", b[i]);
-        if ((i + 1) % 16 == 0)
-            putchar('\n');
-    }
+    unsigned char *alt_dec;
+    size_t alt_dec_len;
+    Base64Decode(a, &alt_dec, &alt_dec_len);
+    printf("Decode length (alternative): %lu\n", alt_dec_len);
+    print_hex(alt_dec, alt_dec_len);
 
-    free(b);
+    free(alt_dec);
     return 0;
 }
 
